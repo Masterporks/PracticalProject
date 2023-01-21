@@ -11,6 +11,7 @@ import javax.persistence.*;
 import java.util.List;
 
 import static entities.Book.session;
+import static org.example.Main.errorMessage;
 
 
 @Entity(name = "client")
@@ -48,6 +49,7 @@ public class Client {
 
         } catch (Exception e) {
             trans.rollback();
+            errorMessage(e);
             e.printStackTrace();
         }
 
@@ -65,6 +67,7 @@ public class Client {
             trans.commit();
         } catch (Exception e) {
             trans.rollback();
+            errorMessage(e);
             e.printStackTrace();
         }
     }
@@ -80,6 +83,7 @@ public class Client {
             trans.commit();
         } catch (Exception e) {
             trans.rollback();
+            errorMessage(e);
             e.printStackTrace();
         }
     }
@@ -96,6 +100,7 @@ public class Client {
             }
             session.getTransaction().commit();
         } catch (Exception e) {
+            errorMessage(e);
             e.printStackTrace();
         }
     }

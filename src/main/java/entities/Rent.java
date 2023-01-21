@@ -11,8 +11,12 @@ import org.hibernate.annotations.ValueGenerationType;
 import javax.persistence.*;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.List;
+
+import static entities.Book.session;
+import static org.example.Main.errorMessage;
 
 @Entity(name = "rent")
 @Data
@@ -24,9 +28,13 @@ public class Rent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int r_id;
 
-    @OneToOne
-    @JoinColumn (name = "isbn")
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "isbn")
     private Book book;
+
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "client_id")
+    private Client client;
 
     @Column(name = "issue_date")
     private Timestamp issueDate;
@@ -34,26 +42,19 @@ public class Rent {
     @Column(name = "due_date")
     private Timestamp dueDate;
 
-
-    @OneToOne
-    @JoinColumn(name = "client_id")
-    private Client client;
-
-    // @Column(name = "client_id", updatable = false, insertable = false) //Or correct column
-    //private int clientId;
-
     @Column(name = "isreturned")
     private boolean isReturned;
 
-    public Rent(int isbn, Timestamp issueDate, Timestamp dueDate, int client_id, boolean isReturned) {
-        this.book.setB_id(isbn);
+    // getters and setters
+
+    public Rent(Book book, Client client, Timestamp issueDate, Timestamp dueDate, boolean isReturned) {
+        this.book = book;
+        this.client = client;
         this.issueDate = issueDate;
         this.dueDate = dueDate;
-        this.client.setC_id(client_id);
         this.isReturned = isReturned;
     }
 
-    static Session session = Database.getHibSesh();
 
     // The system should keep track of the due dates for books and
     // send reminders to users when a book is due soon.
@@ -81,18 +82,36 @@ public class Rent {
         return issueDate;
     }
 
-    public static void createNewRent(Rent rent) {
+
+    public static void createNewRent(int c_id, int b_id) {
         session.beginTransaction();
         Transaction trans = session.getTransaction();
         try {
-            session.persist(rent);
+            Client client = session.get(Client.class, c_id);
+            Book book = session.get(Book.class, b_id);
+            LocalDateTime rentDate = LocalDateTime.now();
+            LocalDateTime returnDate = rentDate.plusDays(7);
+
+            Rent rent = new Rent();
+            rent.setClient(client);
+            rent.setBook(book);
+            rent.setIssueDate(Timestamp.valueOf("2023-01-17 12:02:12"));
+            rent.setReturnDate(returnDate);
+            session.save(rent);
             session.flush();
             trans.commit();
+            System.out.println("Book rent successfull");
         } catch (Exception e) {
             trans.rollback();
+            errorMessage(e);
             e.printStackTrace();
         }
     }
+
+    private void setReturnDate(LocalDateTime returnDate) {
+    }
+
+
 
     public static void listRent() {
         Session session = Database.getHibSesh();
@@ -106,6 +125,7 @@ public class Rent {
             }
             session.getTransaction().commit();
         } catch (Exception e) {
+            errorMessage(e);
             e.printStackTrace();
         }
     }

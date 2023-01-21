@@ -5,15 +5,19 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.exception.ConstraintViolationException;
 
 import javax.persistence.*;
 import javax.print.attribute.standard.DateTimeAtCompleted;
+import java.lang.invoke.StringConcatException;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
+
+import static org.example.Main.errorMessage;
 
 @Entity(name = "book")
 @Data
@@ -46,6 +50,7 @@ public class Book {
         this.title = title;
         this.category = category;
         this.qtyInLibrary = qtyInLibrary;
+        this.author = new Author();
         this.author.setA_id(authorId);
         this.isAvailable = isAvailable;
     }
@@ -60,6 +65,7 @@ public class Book {
             trans.commit();
         } catch (Exception e) {
             trans.rollback();
+            errorMessage(e);
             e.printStackTrace();
         }
     }
@@ -76,6 +82,7 @@ public class Book {
             trans.commit();
         } catch (Exception e) {
             trans.rollback();
+            errorMessage(e);
             e.printStackTrace();
         }
     }
@@ -91,11 +98,12 @@ public class Book {
             trans.commit();
         } catch (Exception e) {
             trans.rollback();
+            errorMessage(e);
             e.printStackTrace();
         }
     }
 
-    // Collections can be used to store the books in the library's collection.
+
     public static void listBook() {
 
         try {
@@ -107,22 +115,13 @@ public class Book {
             }
             session.getTransaction().commit();
         } catch (Exception e) {
+            errorMessage(e);
             e.printStackTrace();
         }
     }
 
     static Scanner sc = new Scanner(System.in);
 
-    // Users should be able to search and view books in the library's collection by entering the ISBN
-    // or title of the book.
-
-
-    // Admins should be able to add, update, and delete books from the collection,
-    // as well as manage user accounts via the console interface.
-
-
-    // Users should be able to check out and return books by entering the ISBN of the book,
-    // with the option to place a hold on a book if it is currently checked out.
     public static void checkOutBook(int isbn) {
 
         Session session = Database.getHibSesh();
@@ -144,7 +143,7 @@ public class Book {
                     int qty = scanner.nextInt();
                     book.setQtyInLibrary(book.getQtyInLibrary() - qty);
                     book.setAvailable(false);
-                    //Rent rent1 = new Rent();
+                    Rent rent1 = new Rent();
                     rent.setIssueDate(Timestamp.valueOf(Rent.issueDate()));
                     rent.setDueDate(Timestamp.valueOf(Rent.dueDate()));
 
@@ -160,6 +159,7 @@ public class Book {
             }
             session.getTransaction().commit();
         } catch (Exception e) {
+            errorMessage(e);
             e.printStackTrace();
         }
 
@@ -191,6 +191,7 @@ public class Book {
             }
             session.getTransaction().commit();
         } catch (Exception e) {
+            errorMessage(e);
             e.printStackTrace();
         }
     }
@@ -198,9 +199,10 @@ public class Book {
     public static void checkoutBookByTitle(String title) {
         Session session = Database.getHibSesh();
 
-
+        listBook();
         try {
             session.beginTransaction();
+            System.out.println("Type a book title name to check availability:");
             List<Book> books = session.createQuery("from book where title = :title", Book.class)
                     .setParameter("title", title)
                     .getResultList();
@@ -217,7 +219,7 @@ public class Book {
                         book.setAvailable(true);
                         session.merge(book);
                         session.flush();
-                        System.out.println("Checkout was successfully!");
+                        System.out.println("Checked out successfully!");
                     } else {
                         System.out.println("Checkout cancelled.");
                     }
@@ -229,6 +231,7 @@ public class Book {
             }
             session.getTransaction().commit();
         } catch (Exception e) {
+            errorMessage(e);
             e.printStackTrace();
         }
     }
@@ -239,6 +242,7 @@ public class Book {
 
         try {
             session.beginTransaction();
+            System.out.println("Type a book title name you want to return:");
             List<Book> books = session.createQuery("from book where title = :title", Book.class)
                     .setParameter("title", title)
                     .getResultList();
@@ -267,11 +271,12 @@ public class Book {
             }
             session.getTransaction().commit();
         } catch (Exception e) {
+            errorMessage(e);
             e.printStackTrace();
         }
     }
 
-}
 
+}
 
 //       session.update(qtyInLibrary - qty); - if the rent is made

@@ -9,6 +9,8 @@ import org.hibernate.Transaction;
 import javax.persistence.*;
 import java.util.List;
 
+import static org.example.Main.errorMessage;
+
 @Entity(name = "author")
 @Data
 @NoArgsConstructor
@@ -41,6 +43,7 @@ public class Author {
             }
             session.getTransaction().commit();
         } catch (Exception e) {
+            errorMessage(e);
             e.printStackTrace();
         }
     }
@@ -53,6 +56,7 @@ public class Author {
             session.flush();
             trans.commit();
         } catch (Exception e) {
+            errorMessage(e);
             trans.rollback();
             e.printStackTrace();
         }
