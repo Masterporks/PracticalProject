@@ -5,16 +5,14 @@ import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
 import java.sql.Connection;
-
-
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class Database {
 
+   /*
     public static Connection DbConn() {
         Connection connection = null;
-
         try {
             connection = DriverManager.getConnection(
                     "jdbc:postgresql://babar.db.elephantsql.com/ehctpjci",
@@ -25,7 +23,7 @@ public class Database {
         }
         return connection;
     }
-
+    */
 
     public static Session getHibSesh() {
 

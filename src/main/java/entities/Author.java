@@ -1,4 +1,5 @@
 package entities;
+
 import db.Database;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,14 +10,11 @@ import org.hibernate.Transaction;
 import javax.persistence.*;
 import java.util.List;
 
-import static org.example.Main.errorMessage;
-
 @Entity(name = "author")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Author {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int a_id;
@@ -24,13 +22,11 @@ public class Author {
     @Column(name = "author_name")
     private String authorName;
 
-
     public Author(String authorName) {
         this.authorName = authorName;
     }
 
     static Session session = Database.getHibSesh();
-
 
     public static void listAuthor() {
 
@@ -43,7 +39,6 @@ public class Author {
             }
             session.getTransaction().commit();
         } catch (Exception e) {
-            errorMessage(e);
             e.printStackTrace();
         }
     }
@@ -56,7 +51,6 @@ public class Author {
             session.flush();
             trans.commit();
         } catch (Exception e) {
-            errorMessage(e);
             trans.rollback();
             e.printStackTrace();
         }

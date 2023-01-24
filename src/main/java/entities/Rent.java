@@ -6,17 +6,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.hibernate.annotations.ValueGenerationType;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.List;
-
-import static entities.Book.session;
-import static org.example.Main.errorMessage;
+import java.util.Scanner;
 
 @Entity(name = "rent")
 @Data
@@ -28,13 +24,9 @@ public class Rent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int r_id;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @OneToOne
     @JoinColumn(name = "isbn")
-    private Book book;
-
-    @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "client_id")
-    private Client client;
+    private Book book = new Book();
 
     @Column(name = "issue_date")
     private Timestamp issueDate;
@@ -42,22 +34,22 @@ public class Rent {
     @Column(name = "due_date")
     private Timestamp dueDate;
 
+    @OneToOne
+    @JoinColumn(name = "client_id")
+    private Client client = new Client();
+
     @Column(name = "isreturned")
     private boolean isReturned;
 
-    // getters and setters
-
-    public Rent(Book book, Client client, Timestamp issueDate, Timestamp dueDate, boolean isReturned) {
-        this.book = book;
-        this.client = client;
+    public Rent(int isbn, Timestamp issueDate, Timestamp dueDate, int c_id, boolean isReturned) {
+        this.book.setB_id(isbn);
         this.issueDate = issueDate;
         this.dueDate = dueDate;
+        this.client.setC_id(c_id);
         this.isReturned = isReturned;
     }
 
-
-    // The system should keep track of the due dates for books and
-    // send reminders to users when a book is due soon.
+    static Session session = Database.getHibSesh();
 
     public static String dueDate() {
         //Date today = new Date();
@@ -66,7 +58,6 @@ public class Rent {
         c.add(Calendar.DATE, 14);  // number of days to add
         String dueDate = (String) (formattedDate.format(c.getTime()));
         System.out.println("Your due date is: " + dueDate);
-
 
         return dueDate;
     }
@@ -78,42 +69,26 @@ public class Rent {
         String issueDate = (String) (formattedDate.format(c.getTime()));
         System.out.println("Your issue date is: " + issueDate);
 
-
         return issueDate;
     }
 
-
-    public static void createNewRent(int c_id, int b_id) {
+    public static void createNewRent(Rent rent) {
         session.beginTransaction();
         Transaction trans = session.getTransaction();
-        try {
-            Client client = session.get(Client.class, c_id);
-            Book book = session.get(Book.class, b_id);
-            LocalDateTime rentDate = LocalDateTime.now();
-            LocalDateTime returnDate = rentDate.plusDays(7);
 
-            Rent rent = new Rent();
-            rent.setClient(client);
-            rent.setBook(book);
-            rent.setIssueDate(Timestamp.valueOf("2023-01-17 12:02:12"));
-            rent.setReturnDate(returnDate);
-            session.save(rent);
+        try {
+            session.persist(rent);
             session.flush();
             trans.commit();
-            System.out.println("Book rent successfull");
         } catch (Exception e) {
             trans.rollback();
-            errorMessage(e);
             e.printStackTrace();
         }
     }
 
-    private void setReturnDate(LocalDateTime returnDate) {
-    }
+    public static void listOfRentedBooks() {
 
-
-
-    public static void listRent() {
+        System.out.println("Hello, wonderful admin! Here is the list of rented books: ");
         Session session = Database.getHibSesh();
 
         try {
@@ -125,8 +100,31 @@ public class Rent {
             }
             session.getTransaction().commit();
         } catch (Exception e) {
-            errorMessage(e);
             e.printStackTrace();
         }
+        System.out.println("Thank you for viewing the list!");
+    }
+
+    public static void deleteRentByAdmin() {
+
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Hello, please enter rent's ID:");
+        int id = scanner.nextInt();
+        System.out.println("Rent with the inserted id will be deleted. Please hold for further information...");
+
+        session.beginTransaction();
+        Transaction trans = session.getTransaction();
+        Rent rent = session.get(Rent.class, id);
+
+        try {
+            session.get(Client.class, id);
+            session.delete(rent);
+            session.flush();
+            trans.commit();
+        } catch (Exception e) {
+            trans.rollback();
+            e.printStackTrace();
+        }
+        System.out.println("Rent with the id: " +id+ "is deleted. Thank you!");
     }
 }
